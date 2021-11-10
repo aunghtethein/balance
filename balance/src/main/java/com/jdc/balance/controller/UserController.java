@@ -36,24 +36,26 @@ public class UserController extends BaseController {
 		navigate(new Destination.Builder().req(req).resp(resp).view("employee/home").pageTitle("Home")
 				.viewTitle("Dashboard").activeMenu("home").build());
 	}
-	
-	private void uploadProfileImage(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		
+
+	private void uploadProfileImage(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
+
 		var profileImage = req.getPart("profileImage");
-		
-		if(null != profileImage) {
-			
+
+		if (null != profileImage) {
+
 			var profile = getLoginInfo(req).profile();
 			var imageFoder = getServletContext().getRealPath("/assets/images");
 			var imageFile = String.format("%s.png", profile.getCode());
-			Files.copy(profileImage.getInputStream(), Path.of(imageFoder, imageFile), StandardCopyOption.REPLACE_EXISTING);
-			
-			var user=userService().saveProfileImages(profile. getCode(), imageFile);
-			
+			Files.copy(profileImage.getInputStream(), Path.of(imageFoder, imageFile),
+					StandardCopyOption.REPLACE_EXISTING);
+
+			var user = userService().saveProfileImages(profile.getCode(), imageFile);
+
 			super.getLoginInfo(req).login(user);
 		}
 		redirect(resp, "/employee/home");
-		
+
 	}
 
 	private void changePassword(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -61,16 +63,17 @@ public class UserController extends BaseController {
 				.pageTitle("Password").viewTitle("Change Password").activeMenu("home").build();
 		if (isPostRequest(req)) {
 			// TODO save password action
-			
+
 			super.handleBusinessError(() -> {
 				var code = getLoginInfo(req).profile().getCode();
-				
-				super.userService().changePass(code, req.getParameter("old-pass"), req.getParameter("new-pass"), req.getParameter("confirm-pass"));
-				
+
+				super.userService().changePass(code, req.getParameter("old-pass"), req.getParameter("new-pass"),
+						req.getParameter("confirm-pass"));
+
 				var user = super.employeeService().findByCode(code);
-				
+
 				super.getLoginInfo(req).login(user);
-				
+
 				redirect(resp, "/employee/home");
 			}, change);
 		} else {
@@ -82,22 +85,22 @@ public class UserController extends BaseController {
 		var editView = new Destination.Builder().req(req).resp(resp).view("employee/edit-profile").pageTitle("Profile")
 				.viewTitle("Edit Profile").activeMenu("home").build();
 		if (isPostRequest(req)) {
-			
+
 			this.handleBusinessError(() -> {
 				var code = req.getParameter("code");
 				var user = employeeService().findByCode(code);
-				
+
 				user.setName(req.getParameter("name"));
 				user.setPhone(req.getParameter("phone"));
 				user.setEmail(req.getParameter("email"));
-				
+
 				user = super.employeeService().save(user);
-				
+
 				this.getLoginInfo(req).login(user);
-				
+
 				redirect(resp, "/employee/home");
 			}, editView);
-			
+
 		} else {
 			navigate(editView);
 		}

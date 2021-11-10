@@ -1,7 +1,10 @@
+ <%@page import="com.jdc.balance.model.vo.BalanceVO"%>
+<%@page import="com.jdc.balance.model.domain.TransactionDetails"%>
+<%@page import="com.jdc.balance.model.domain.Transaction"%>
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
 	<%@ page extends="com.jdc.balance.BaseView" %>
-	
+	  
     <form action="#" class="form-inline">
     	
     	<div class="form-group">
@@ -15,8 +18,18 @@
     	</div>
     	
     	<div class="form-group">
+    		<label>Category</label>
+    		<select name="category" >
+    			<option value="">All Category</option>
+    			
+    		</select>
+    	</div>
     	
-    		<button type="submit" class="btn">Search</button>
+    	<div class="form-group">
+    	
+    		<button type="submit" class="btn mr-4 icon-btn">
+    		<img src="<%= getSvg("search") %>" class="icon icon-left" />
+    		Search</button>
     	</div>
     </form>
     
@@ -26,20 +39,35 @@
     			<th>Date</th>
     			<th>Category</th>
     			<th>Employee</th>
-    			<th class="right">Income</th>
     			<th class="right">Expense</th>
+    			<th class="right">Income</th>
     			<th class="right">Balance</th>
     		</tr>
     	</thead>
+    	<jsp:useBean id="list" scope="request" type="java.util.List<BalanceVO>" />
+    	
+  
     	<tbody>
-    		<% for(int i=0; i<10; i++) {%>
+    		<% for(BalanceVO v : list) {%>
+    	
     			<tr>
-    				<td>2021-09-12</td>
-    				<td>Java Basic</td>
-    				<td>Hein Htet</td>
-    				<td class="right">100,000</td>
-    				<td class="right"></td>
-    				<td class="right">2,000,000</td>
+    				<td>
+    					<a href="<%= getPath("/employee/transaction/details?id=" + v.getId())%>">
+    						<%= getDateString(v.getDate()) %>	
+    					</a>
+    				</td>
+    				<td><%= v.getEmployee().getName() %></td>
+    				<td><%= v.getCategory() %></td>
+    				
+    				<td class="right">
+    					<%= formatNumber(v.getExpense()) %> MMK
+    				</td>
+    				<td class="right">
+    					<%= formatNumber(v.getIncome()) %> MMK
+    				</td>
+    				<td class="right">
+    					<%= formatNumber(v.getBalance()) %> MMK
+    				</td>
     			</tr>
     		<%} %>
     	</tbody>

@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import com.jdc.balance.BaseController;
 import com.jdc.balance.Destination;
+import com.jdc.balance.utils.DateUtils;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -21,9 +22,14 @@ public class BalanceController extends BaseController {
 	}
 
 	private void search(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		navigate(new Destination.Builder().req(req).resp(resp).
-				view("manager/report").pageTitle("Reports")
+		var from = req.getParameter("from");
+		var to = req.getParameter("to");
+		var category = req.getParameter("category");
+
+		var list = balanceService().search(DateUtils.StringToDate(from), DateUtils.StringToDate(to), category);
+//from == null || from.isEmpty() ? LocalDate.now() : DateUtils.StringToDate(from)
+		req.setAttribute("list", list);
+		navigate(new Destination.Builder().req(req).resp(resp).view("manager/report").pageTitle("Reports")
 				.viewTitle("Balance Report").activeMenu("reports").build());
 	}
-
 }

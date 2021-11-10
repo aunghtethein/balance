@@ -7,8 +7,10 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import com.jdc.balance.model.ServiceManager.LifeCycle;
 import com.jdc.balance.model.domain.Transaction;
@@ -16,39 +18,66 @@ import com.jdc.balance.model.domain.Transaction.Type;
 import com.jdc.balance.model.repo.TransactionRepo;
 import com.jdc.balance.model.repo.impl.TransactionRepoImpl;
 import com.jdc.balance.model.service.BalanceBusinessException;
+import com.jdc.balance.model.service.BalanceService;
 import com.jdc.balance.model.service.TransactionService;
+import com.jdc.balance.model.vo.BalanceVO;
+import com.jdc.balance.utils.StringUtils;
 
-public class TransactionServiceImpl implements TransactionService, LifeCycle {
+public class TransactionServiceImpl implements TransactionService, BalanceService, LifeCycle {
 
 	private TransactionRepo repo;
 	private String storage;
 	private static final String FILE_NAME = "transactions.dat";
-	
+
 	public TransactionServiceImpl(String storage) {
 		this.storage = storage;
 		repo = new TransactionRepoImpl();
 	}
 
 	@Override
-	public List<Transaction> search(Type type, LocalDate from, LocalDate to, String category) {
+	public List<Transaction> search(String code, Type type, LocalDate from, LocalDate to, String category) {
 		Predicate<Transaction> filter = data -> true;
-		
-		if(null != type) {
+
+		if (!StringUtils.isEmpty(code)) {
+			filter = filter.and(data -> data.getEmployee().getCode().equals(code));
+		}
+
+		if (null != type) {
 			filter = filter.and(data -> data.getType() == type);
 		}
-		if(null != from) {
+		if (null != from) {
 			filter = filter.and(data -> data.getDate().compareTo(from) >= 0);
 		}
-		
-		if(null != to) {
+
+		if (null != to) {
 			filter = filter.and(data -> data.getDate().compareTo(to) <= 0);
 		}
-		
-		if(null != category && !category.isEmpty()) {
+
+		if (null != category && !category.isEmpty()) {
 			filter = filter.and(data -> data.getCategory().toLowerCase().startsWith(category.toLowerCase()));
 		}
-		
+
 		return repo.search(filter);
+	}
+
+	@Override
+	public List<BalanceVO> search(LocalDate from, LocalDate to, String category) {
+		Predicate<Transaction> filter = data -> data.isApproved();
+
+		if (null != from) {
+			filter = filter.and(data -> data.getDate().compareTo(from) >= 0);
+		}
+
+		if (null != to) {
+			filter = filter.and(data -> data.getDate().compareTo(to) <= 0);
+		}
+
+		if (null != category && !category.isEmpty()) {
+			filter = filter.and(data -> data.getCategory().toLowerCase().startsWith(category.toLowerCase()));
+		}
+		var transactions = repo.search(filter);
+
+		return transactions.stream().map(BalanceVO::new).toList();
 	}
 
 	@Override
@@ -58,34 +87,34 @@ public class TransactionServiceImpl implements TransactionService, LifeCycle {
 
 	@Override
 	public Transaction save(Transaction data) {
-		
-		//date
-		if(null == data.getDate()) {
+
+		// date
+		if (null == data.getDate()) {
 			throw new BalanceBusinessException("Please enter transaction date.");
 		}
-		
-		//type
-		if(null == data.getType()) {
+
+		// type
+		if (null == data.getType()) {
 			throw new BalanceBusinessException("Please enter transaction type.");
 		}
-		//category
-		if(null == data.getCategory() || data.getCategory().isEmpty()) {
+		// category
+		if (null == data.getCategory() || data.getCategory().isEmpty()) {
 			throw new BalanceBusinessException("Please enter transaction category");
 		}
-		//employee
-		if(null == data.getEmployee()) {
+		// employee
+		if (null == data.getEmployee()) {
 			throw new BalanceBusinessException("Please set employee.");
 		}
-		
-		//details
-		if(null == data.getDetails() || data.getDetails().isEmpty()) {
+
+		// details
+		if (null == data.getDetails() || data.getDetails().isEmpty()) {
 			throw new BalanceBusinessException("Please enter transaction details");
 		}
-		
-		if(data.getId() == 0) {
+
+		if (data.getId() == 0) {
 			return repo.create(data);
 		}
-		//TODO check to update
+		// TODO check to update
 		return repo.update(data);
 	}
 
@@ -98,37 +127,44 @@ public class TransactionServiceImpl implements TransactionService, LifeCycle {
 
 	@Override
 	public void load() {
-		try(var input = new ObjectInputStream(new FileInputStream(getDataFile()))) {
+		try (var input = new ObjectInputStream(new FileInputStream(getDataFile()))) {
 			var object = input.readObject();
-			
-			if(null != object) {
+
+			if (null != object) {
 				repo = (TransactionRepo) object;
 			}
-		}catch(Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 	}
 
 	@Override
 	public void save() {
-		try(var output = new ObjectOutputStream(new FileOutputStream(getDataFile()))) {
+		try (var output = new ObjectOutputStream(new FileOutputStream(getDataFile()))) {
 			output.writeObject(repo);
-		}catch(Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
+
 	private File getDataFile() throws IOException {
 		var file = new File(storage, FILE_NAME);
-		if(!file.exists()) {
+		if (!file.exists()) {
 			var fileStorage = new File(storage);
-			if(!fileStorage.exists()) {
+			if (!fileStorage.exists()) {
 				fileStorage.mkdir();
+
 			}
 			file.createNewFile();
 		}
 		return file;
 	}
-	
-	
+
+	@Override
+	public Map<Type, Integer> getSummary() {
+		return repo.search(a -> true).stream()
+				.collect(Collectors.groupingBy(Transaction::getType, Collectors.summingInt(Transaction::getTotal)));
+	}
+
 }

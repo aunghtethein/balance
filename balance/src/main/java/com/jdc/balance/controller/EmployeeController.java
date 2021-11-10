@@ -1,5 +1,7 @@
 package com.jdc.balance.controller;
 
+import static com.jdc.balance.utils.StringUtils.isEmpty;
+
 import java.io.IOException;
 
 import com.jdc.balance.BaseController;
@@ -12,40 +14,35 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import static com.jdc.balance.utils.StringUtils.*;
 
-@WebServlet({
-	"/manager/employee/search",
-	"/manager/employee/edit",
-	"/manager/employee/save",
-})
+@WebServlet({ "/manager/employee/search", "/manager/employee/edit", "/manager/employee/save", })
 public class EmployeeController extends BaseController {
 	private static final long serialVersionUID = 1L;
-	
+
 	@Override
-	protected void process(HttpServletRequest req, HttpServletResponse resp, String path) throws ServletException, IOException {
-		switch(path) {
+	protected void process(HttpServletRequest req, HttpServletResponse resp, String path)
+			throws ServletException, IOException {
+		switch (path) {
 		case "/manager/employee/search" -> search(req, resp);
 		case "/manager/employee/edit" -> edit(req, resp);
 		case "/manager/employee/save" -> save(req, resp);
 		}
 	}
-	
+
 	private void search(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		//TODO Employee search
+		// TODO Employee search
 		var role = req.getParameter("role");
 		var name = req.getParameter("name");
-		
+
 		var list = employeeService().search(role == null || role.isEmpty() ? null : Role.valueOf(role), name);
 		req.setAttribute("list", list);
-		
-		navigate(new Destination.Builder().req(req).resp(resp)
-				.view("manager/employee").pageTitle("Employees")
+
+		navigate(new Destination.Builder().req(req).resp(resp).view("manager/employee").pageTitle("Employees")
 				.viewTitle("Employee Management").activeMenu("employees").build());
 	}
 
 	private void edit(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		if(isPostRequest(req)) {
+		if (isPostRequest(req)) {
 			var code = req.getParameter("code");
 			var name = req.getParameter("name");
 			var role = req.getParameter("role");
@@ -53,10 +50,10 @@ public class EmployeeController extends BaseController {
 			var email = req.getParameter("email");
 			var registrationDate = req.getParameter("registrationDate");
 			var retireDate = req.getParameter("retireDate");
-			
+
 			var employee = new Employee();
-			
-			if(null != code && !code.isEmpty()) {
+
+			if (null != code && !code.isEmpty()) {
 				employee = employeeService().findByCode(code);
 			}
 			employee.setCode(code);
@@ -67,31 +64,26 @@ public class EmployeeController extends BaseController {
 			employee.setRegistrationDate(DateUtils.StringToDate(registrationDate));
 			employee.setRetireDate(DateUtils.StringToDate(retireDate));
 			employeeService().save(employee);
-		
-			
-			//TODO Employee save action
+
+			// TODO Employee save action
 			redirect(resp, "/manager/employee/search");
-		}else {
+		} else {
 			var code = req.getParameter("code");
 			var action = "Add New Employee";
-			
-			if(null != code) {
+
+			if (null != code) {
 				action = "Edit Employee";
 				var employee = employeeService().findByCode(code);
 				req.setAttribute("employee", employee);
 			}
-			
-			navigate(new Destination.Builder().req(req).resp(resp)
-					.view("manager/employee-edit").pageTitle(action)
+
+			navigate(new Destination.Builder().req(req).resp(resp).view("manager/employee-edit").pageTitle(action)
 					.viewTitle(action).activeMenu("employees").build());
 		}
 	}
 
 	private void save(HttpServletRequest req, HttpServletResponse resp) {
-		
+
 	}
-
-
-	
 
 }
