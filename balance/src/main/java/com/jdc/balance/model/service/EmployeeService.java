@@ -1,6 +1,6 @@
 package com.jdc.balance.model.service;
 
-import java.util.*;
+import java.util.List;
 
 import com.jdc.balance.model.domain.Employee;
 import com.jdc.balance.model.domain.Employee.Role;
@@ -13,4 +13,5 @@ public interface EmployeeService {
 
 	public Employee findByCode(String code);
 
+	int count();
 }

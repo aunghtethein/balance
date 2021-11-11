@@ -5,28 +5,21 @@
     pageEncoding="UTF-8"%>
 	<%@ page extends="com.jdc.balance.BaseView" %>
 	  
-    <form action="#" class="form-inline">
+    <form class="form-inline">
     	
     	<div class="form-group">
-    		<label>Date From</label>
-    		<input type="date" name="from" placeholder="Search From" />
+    		<label>From </label>
+    		<input type="date" name="from" value="<%= request.getParameter("from") %>" placeholder="Search From" />
     	</div>
     	
     	<div class="form-group">
-    		<label>Date To</label>
- 			<input type="date" name="to" placeholder="Search To" />
+    		<label>To </label>
+ 			<input type="date" name="to" value="<%= request.getParameter("to") %>" placeholder="Search To" />
     	</div>
     	
-    	<div class="form-group">
-    		<label>Category</label>
-    		<select name="category" >
-    			<option value="">All Category</option>
-    			
-    		</select>
-    	</div>
+    	
     	
     	<div class="form-group">
-    	
     		<button type="submit" class="btn mr-4 icon-btn">
     		<img src="<%= getSvg("search") %>" class="icon icon-left" />
     		Search</button>
@@ -37,8 +30,8 @@
     	<thead>
     		<tr>
     			<th>Date</th>
-    			<th>Category</th>
     			<th>Employee</th>
+    			<th>Category</th>
     			<th class="right">Expense</th>
     			<th class="right">Income</th>
     			<th class="right">Balance</th>

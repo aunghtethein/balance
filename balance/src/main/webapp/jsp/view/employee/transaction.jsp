@@ -1,17 +1,18 @@
+<%@page import="com.jdc.balance.model.domain.Transaction"%>
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
       <%@ page extends="com.jdc.balance.BaseView" %>
 
     <form class="form-inline">
-    	 	
+    		
     	<div class="form-group">
-    		<label>From</label>
-    		<input type="date" name="from" />
+    		<label>From </label>
+    		<input type="date" name="from" value="<%= request.getParameter("from") %>" placeholder="Search From" />
     	</div>
     	
     	<div class="form-group">
-    		<label>To</label>
-    		<input type="date" name="to" />
+    		<label>To </label>
+ 			<input type="date" name="to" value="<%= request.getParameter("to") %>" placeholder="Search To" />
     	</div>
     	
     	<div class="form-group">
@@ -42,18 +43,28 @@
     			<th class="right">Amount</th>
     		</tr>
     	</thead>
+    	<jsp:useBean id="list" scope="request" type="java.util.List<com.jdc.balance.model.domain.Transaction>" />
     	
+    	 
     	<tbody>
-    		<% for(int i=0; i<20;i++){ %>
+    		<% for(Transaction v : list) {%>
+    	
     			<tr>
     				<td>
-    					<a href="<%=getPath("/employee/transaction/details")%>">2021-04-12</a>
+    					<a href="<%= getPath("/employee/transaction/details?id=" + v.getId())%>">
+    						<%= getDateString(v.getDate()) %>	
+    					</a>
     				</td>
-    				<td>Hein Htet</td>
-    				<td>Java Basic Online Class</td>
-					<td>Yes</td>
-					<td class="right">5</td>	
-					<td class="right">500000</td>
+    				<td><%= v.getEmployee().getName() %></td>
+    				<td><%= v.getCategory() %></td>
+    				
+    				<td><%= v.isApproved() ? "Yes" : "No"%> </td>
+    				
+    				<td class="right">
+    					<%= formatNumber(v.getItems()) %></td>
+    				<td class="right">
+    					<%= formatNumber(v.getTotal()) %> MMK
+    				</td>
     			</tr>
     		<%} %>
     	</tbody>

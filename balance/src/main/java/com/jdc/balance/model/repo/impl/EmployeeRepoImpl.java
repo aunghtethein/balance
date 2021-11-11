@@ -1,7 +1,9 @@
 package com.jdc.balance.model.repo.impl;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
 import com.jdc.balance.model.domain.Employee;
@@ -11,13 +13,12 @@ public class EmployeeRepoImpl implements EmployeeRepo, Serializable {
 	private static final long serialVersionUID = 1L;
 	private Map<String, Employee> domain;
 	private EmployeeCodeGenerator codeGenerator;
-	
+
 	public EmployeeRepoImpl() {
 		domain = new HashMap<>();
 		codeGenerator = new EmployeeCodeGenerator();
 	}
 
-	
 	@Override
 	public List<Employee> search(Predicate<Employee> filter) {
 		return domain.values().stream().filter(filter).toList();
@@ -42,12 +43,14 @@ public class EmployeeRepoImpl implements EmployeeRepo, Serializable {
 		return domain.get(code);
 	}
 
-
 	@Override
 	public int employeeCount() {
 		return domain.size();
 	}
 
-	
+	@Override
+	public int count() {
+		return domain.size();
+	}
 
 }

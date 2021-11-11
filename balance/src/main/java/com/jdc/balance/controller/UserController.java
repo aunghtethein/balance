@@ -7,6 +7,7 @@ import java.nio.file.StandardCopyOption;
 
 import com.jdc.balance.BaseController;
 import com.jdc.balance.Destination;
+import com.jdc.balance.model.domain.Transaction.Type;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -31,7 +32,18 @@ public class UserController extends BaseController {
 	}
 
 	private void loadHome(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		// TODO load user home
+		var summary = balanceService().getSummary();
+
+		req.setAttribute("incomeSummary",  summary.get(Type.Income));
+		req.setAttribute("expenseSummary", summary.get(Type.Expense));
+		req.setAttribute("balanceSummary", summary.get(Type.Income) - summary.get(Type.Expense));
+		
+		var categories = balanceService().getCategorySummary();
+		
+		req.setAttribute("incomeCategory",  categories.get(Type.Income));
+		req.setAttribute("expenseCategory", categories.get(Type.Expense));
+		
+		req.setAttribute("empCount", employeeService().count());
 
 		navigate(new Destination.Builder().req(req).resp(resp).view("employee/home").pageTitle("Home")
 				.viewTitle("Dashboard").activeMenu("home").build());

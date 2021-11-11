@@ -1,7 +1,9 @@
 package com.jdc.balance.model.repo.impl;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
 import com.jdc.balance.model.domain.Transaction;
@@ -16,6 +18,7 @@ public class TransactionRepoImpl implements TransactionRepo, Serializable {
 		domain = new HashMap<>();
 		idGenerator = new TransactionIdGenerator();
 	}
+
 	@Override
 	public Transaction create(Transaction data) {
 		var id = idGenerator.next();
@@ -37,7 +40,7 @@ public class TransactionRepoImpl implements TransactionRepo, Serializable {
 
 	@Override
 	public List<Transaction> search(Predicate<Transaction> filter) {
-		return domain.values().stream().filter(filter).toList();
+		return domain.values().stream().filter(filter).sorted((a, b) -> a.getDate().compareTo(b.getDate())).toList();
 	}
 
 }

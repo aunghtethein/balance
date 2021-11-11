@@ -1,6 +1,6 @@
 package com.jdc.balance.model.repo;
 
-import java.util.*;
+import java.util.List;
 import java.util.function.Predicate;
 
 import com.jdc.balance.model.domain.Employee;
@@ -16,5 +16,7 @@ public interface EmployeeRepo {
 	public Employee findByCode(String code);
 
 	public int employeeCount();
+
+	public int count();
 
 }

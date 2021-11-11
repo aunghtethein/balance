@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -21,6 +23,7 @@ import com.jdc.balance.model.service.BalanceBusinessException;
 import com.jdc.balance.model.service.BalanceService;
 import com.jdc.balance.model.service.TransactionService;
 import com.jdc.balance.model.vo.BalanceVO;
+import com.jdc.balance.model.vo.Category;
 import com.jdc.balance.utils.StringUtils;
 
 public class TransactionServiceImpl implements TransactionService, BalanceService, LifeCycle {
@@ -61,7 +64,7 @@ public class TransactionServiceImpl implements TransactionService, BalanceServic
 	}
 
 	@Override
-	public List<BalanceVO> search(LocalDate from, LocalDate to, String category) {
+	public List<BalanceVO> search(LocalDate from, LocalDate to) {
 		Predicate<Transaction> filter = data -> data.isApproved();
 
 		if (null != from) {
@@ -72,12 +75,15 @@ public class TransactionServiceImpl implements TransactionService, BalanceServic
 			filter = filter.and(data -> data.getDate().compareTo(to) <= 0);
 		}
 
-		if (null != category && !category.isEmpty()) {
-			filter = filter.and(data -> data.getCategory().toLowerCase().startsWith(category.toLowerCase()));
-		}
 		var transactions = repo.search(filter);
 
-		return transactions.stream().map(BalanceVO::new).toList();
+		var lastBalance = findLastBalance(from);
+
+		return transactions.stream().map(BalanceVO::new).collect(ArrayList<BalanceVO>::new, (list, data) -> {
+			var balance = list.isEmpty() ? lastBalance.getBalance() : list.get(list.size() - 1).getBalance();
+			data.setBalance(balance + data.getIncome() - data.getExpense());
+			list.add(data);
+		}, ArrayList::addAll);
 	}
 
 	@Override
@@ -148,6 +154,19 @@ public class TransactionServiceImpl implements TransactionService, BalanceServic
 		}
 	}
 
+	private BalanceVO findLastBalance(LocalDate date) {
+		Map<Type, Integer> lastBalance = repo.search(data -> data.isApproved() && data.getDate().compareTo(date) < 0)
+				.stream()
+				.collect(Collectors.groupingBy(Transaction::getType, Collectors.summingInt(Transaction::getTotal)));
+		var result = new BalanceVO();
+
+		result.setIncome(null == lastBalance.get(Type.Income) ? 0 : lastBalance.get(Type.Income));
+		result.setExpense(null == lastBalance.get(Type.Expense) ? 0 : lastBalance.get(Type.Expense));
+		result.setBalance(result.getIncome() - result.getExpense());
+
+		return result;
+	}
+
 	private File getDataFile() throws IOException {
 		var file = new File(storage, FILE_NAME);
 		if (!file.exists()) {
@@ -159,6 +178,22 @@ public class TransactionServiceImpl implements TransactionService, BalanceServic
 			file.createNewFile();
 		}
 		return file;
+	}
+
+	@Override
+	public Map<Type, List<Category>> getCategorySummary() {
+
+		Map<Type, List<Category>> result = new HashMap<>();
+
+		repo.search(a -> true).stream().collect(Collectors.groupingBy(
+				Transaction::getType,
+				Collectors.groupingBy(Transaction::getCategory, Collectors.summarizingInt(Transaction::getTotal))))
+				.forEach((key, value) -> {
+
+					result.put(key, value.entrySet().stream().map(Category::generate)
+							.sorted((a, b) -> (int) (b.total() - a.total())).toList());
+				});
+		return result;
 	}
 
 	@Override

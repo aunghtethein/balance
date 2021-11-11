@@ -153,6 +153,11 @@ public class EmployeeServiceImpl implements EmployeeService, UserService, LifeCy
 	}
 
 	@Override
+	public int count() {
+		return repo.count();
+	}
+
+	@Override
 	public void save() {
 		try (var output = new ObjectOutputStream(new FileOutputStream(getDataFile()))) {
 			output.writeObject(repo);
